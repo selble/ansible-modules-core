@@ -78,6 +78,12 @@ options:
     default:
     required: false
     version_added: "2.1"
+  support_legacy:
+    description:
+      - If set to true, disable calls to Python's native ZipFile library. This disables list_files and crc32 checks.
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.1"
 author: "Dag Wieers (@dagwieers)"
 todo:
     - re-implement tar support using native tarfile module
@@ -373,7 +379,7 @@ class ZipArchive(object):
                 itemized[3] = 's'
 
             # Compare file checksums
-            if stat.S_ISREG(st.st_mode):
+            if stat.S_ISREG(st.st_mode) and not module.params['support_legacy']:
                 crc = crc32(dest)
                 if crc != self._crc32(path):
                     change = True
@@ -626,6 +632,7 @@ def main():
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
+            support_legacy    = dict(required=False, default=False, type='bool'),
             keep_newer        = dict(required=False, default=False, type='bool'),
             exclude           = dict(requited=False, default=[], type='list'),
             extra_opts        = dict(required=False, default=[], type='list'),
@@ -707,7 +714,7 @@ def main():
             res_args['diff'] = { 'prepared': check_results['diff'] }
 
     # Run only if we found differences (idempotence) or diff was missing
-    if res_args.get('diff', True):
+    if res_args.get('diff', True) and not module.params['support_legacy']:
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
@@ -716,7 +723,7 @@ def main():
             except (IOError, OSError), e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
 
-    if module.params['list_files']:
+    if module.params['list_files'] and not module.params['support_legacy']:
         res_args['files'] = handler.files_in_archive
 
     module.exit_json(**res_args)

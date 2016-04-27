@@ -632,6 +632,7 @@ def main():
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
+            # Adding support_legacy as a quick-and-dirty fix for issue #3560
             support_legacy    = dict(required=False, default=False, type='bool'),
             keep_newer        = dict(required=False, default=False, type='bool'),
             exclude           = dict(requited=False, default=[], type='list'),
